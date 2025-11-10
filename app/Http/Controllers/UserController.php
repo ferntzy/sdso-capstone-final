@@ -25,7 +25,7 @@ class UserController extends Controller
       'username' => 'required|unique:users,username',
       'email' => 'required|email|unique:users,email',
       'password' => 'required|min:6',
-      'account_role' => 'required',
+      'account_role' => 'required|in:Student_Organization,SDSO_Head,Faculty_Adviser,VP_SAS,SAS_Director,BARGO,admin',
     ]);
 
     User::create([

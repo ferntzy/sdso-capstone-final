@@ -18,7 +18,6 @@ class User extends Authenticatable
    * @var array<int, string>
    */
 
-  use Notifiable;
 
   protected $table = 'users'; // table name
   protected $primaryKey = 'user_id'; // your actual PK name
@@ -39,10 +38,17 @@ class User extends Authenticatable
     'password',
     'remember_token',
   ];
+  // public function organization()
+  // {
+  //   return $this->hasOne(Organization::class, 'user_id');
+  // }
+
   public function organization()
   {
-    return $this->hasOne(Organization::class, 'user_id');
+      return $this->belongsTo(Organization::class, 'organization_id');
   }
+
+
   /**
    * The attributes that should be cast.
    *
@@ -55,5 +61,10 @@ class User extends Authenticatable
   public function approvalTasks()
   {
     return $this->hasMany(EventApprovalFlow::class, 'approver_id', 'user_id');
+  }
+
+   public function profile()
+  {
+      return $this->hasOne(UserProfile::class, 'user_id', 'user_id');
   }
 }

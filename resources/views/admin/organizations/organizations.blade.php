@@ -38,12 +38,14 @@
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <small class="text-muted d-block">Members</small>
-                      <span class="fw-semibold">{{ $org['members'] }}</span>
+                     <span class="fw-semibold">{{ $org->members_count }}</span>
                     </div>
+
                     <div class="text-end">
-                      <small class="text-muted d-block">Advisor</small>
-                      <span class="fw-semibold">{{ $org['advisor'] }}</span>
+                        <small class="text-muted d-block">Advisor</small>
+                        <span class="fw-semibold">{{ $org->advisor }}</span>
                     </div>
+
                   </div>
                 </div>
                 <div class="card-footer bg-transparent border-top text-center d-flex gap-1">
@@ -101,56 +103,101 @@
   </div>
 
   {{-- ADD ORGANIZATION MODAL --}}
-  <div class="modal fade" id="addOrgModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <form id="addOrgForm">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">Add Organization</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal fade" id="addOrgModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="addOrgForm" action="{{ route('organizations.store') }}" method="POST">
+        @csrf
+
+        <!-- Modal Header -->
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Add Organization</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+
+          <!-- Organization Fields -->
+          <div class="mb-3">
+            <label class="form-label">Organization Name</label>
+            <input type="text" name="organization_name" class="form-control" required>
           </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Organization Name</label>
-              <input type="text" class="form-control" required>
+
+          <div class="mb-3">
+            <label class="form-label">Type</label>
+            <select name="organization_type" class="form-select" required>
+              <option>Academic Organization</option>
+              <option>Government Organization</option>
+              <option>Civic Organization</option>
+              <option>Cultural Organization</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Adviser</label>
+            <select name="adviser_id" class="form-select">
+              <option value=""></option>
+              @foreach ($advisers as $adviser)
+                <option value="{{ $adviser->user_id }}">
+                  {{ $adviser->profile->first_name ?? '' }} {{ $adviser->profile->last_name ?? '' }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+              <option>Active</option>
+              <option>Inactive</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+          </div>
+
+          <!-- Officer Fields -->
+          <hr>
+          <h6 class="fw-semibold">Organization Officer</h6>
+          <div class="officer-group mb-3">
+            <div class="mb-2">
+              <label class="form-label">Officer Name</label>
+              <input type="text" name="officers[0][officer_name]" class="form-control" required>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Type</label>
-              <select class="form-select" required>
-                <option>Academic Organization</option>
-                <option>Government Organization</option>
-                <option>Civic Organization</option>
-                <option>Cultural Organization</option>
-              </select>
+
+            <div class="mb-2">
+              <label class="form-label">Email</label>
+              <input type="email" name="officers[0][contact_email]" class="form-control" >
             </div>
-            <div class="mb-3">
-              <label class="form-label">Advisor</label>
-              <input type="text" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Members</label>
-              <input type="number" class="form-control" min="1">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Status</label>
-              <select class="form-select">
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Description</label>
-              <textarea class="form-control" rows="3"></textarea>
+
+            <div class="mb-2">
+              <label class="form-label">Contact Number</label>
+              <input type="text" name="officers[0][contact_number]" class="form-control" >
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save</button>
-          </div>
-        </form>
-      </div>
+
+          <!-- Add Org LOGO -->
+          <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addOfficerBtn">
+            + Add LOGO
+          </button>
+
+        </div>
+
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+
+      </form>
     </div>
   </div>
+</div>
+
+
 
   {{-- EDIT ORGANIZATION MODAL (same structure as add, prefilled dynamically) --}}
   <div class="modal fade" id="editOrgModal" tabindex="-1">

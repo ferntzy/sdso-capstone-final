@@ -17,65 +17,68 @@ class Organization extends Model
         'user_id',
         'organization_name',
         'organization_type',
-        'adviser_name',
+        'adviser_name', // replace adviser_name with adviser_id
         'contact_email',
         'contact_number',
         'status',
-        'members',
         'description',
     ];
 
-    // 🔗 Link back to the user
+    // Link back to creator user
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // 🔗 Link to events
+    // 🔗 Link to members
+    public function members()
+    {
+        return $this->hasMany(Member::class, 'organization_id', 'organization_id');
+    }
+    // 🧮 Accessor for member count
+    public function getMembersCountAttribute()
+    {
+        return $this->members()->count();
+    }
+
+
+    // Link to events
     public function events()
     {
         return $this->hasMany(Event::class, 'organization_id');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Accessors — make your Blade variables work naturally
-    |--------------------------------------------------------------------------
-    */
-
-    // Use $org->name instead of $org->organization_name
-    public function getNameAttribute()
+    // Link to adviser user
+    public function adviserUser()
     {
-        return $this->organization_name;
+        return $this->belongsTo(User::class, 'adviser_name', 'user_id')
+                    ->where('account_role', 'Faculty_Adviser');
     }
 
-    // Use $org->type instead of $org->organization_type
-    public function getTypeAttribute()
-    {
-        return $this->organization_type;
-    }
-
-    // Use $org->advisor instead of $org->adviser_name
+    // Accessor for adviser full name
     public function getAdvisorAttribute()
     {
-        return $this->adviser_name;
+        return $this->adviserUser?->profile?->full_name ?? 'N/A';
     }
 
-    // Optional: members (default to 0 if null)
-    public function getMembersAttribute($value)
-    {
-        return $value ?? 0;
-    }
-
-    // Optional: status (default to "Active" if null)
+    // Optional accessors
     public function getStatusAttribute($value)
     {
         return $value ?? 'Active';
     }
 
-    // Optional: description (default empty string)
     public function getDescriptionAttribute($value)
     {
         return $value ?? '';
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->organization_name;
+    }
+
+    public function getTypeAttribute()
+    {
+        return $this->organization_type;
     }
 }
