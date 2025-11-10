@@ -11,7 +11,8 @@
     {
       "url": "/admin/calendar",
       "name": "Calendar",
-      "slug": "dashboard-calendar"
+        "icon": "mdi:file-document-edit-outline",
+      "slug": "admin-calendar"
     },
     {
       "menuHeader": "Event Requests"

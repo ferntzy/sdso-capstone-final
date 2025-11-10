@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -10,14 +10,14 @@ class CalendarController extends Controller
 {
   public function index()
   {
-    $events = Event::all(['id', 'title', 'start', 'end', 'venue']); // customize fields as needed
+    $events = Event::all(['event_id', 'event_title', 'event_date']); // customize fields as needed
     return view('admin.calendar.calendar', compact('events'));
   }
 
   public function store(Request $request)
   {
     $request->validate([
-      'title' => 'required|string',
+      'event_title' => 'required|string',
       'start' => 'required|date',
       'end' => 'required|date|after_or_equal:start',
       'venue' => 'required|string',

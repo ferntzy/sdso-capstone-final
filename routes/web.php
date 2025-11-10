@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\Admin\CalendarController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PermitController;
 use App\Http\Controllers\StudentEventController;
 // ============================
@@ -33,8 +33,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
   Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
   Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
   Route::get('/logs', [App\Http\Controllers\UserLogController::class, 'index'])->name('admin.logs');
+  Route::post('/users/check-availability', [UserController::class, 'checkAvailability'])
+    ->name('users.checkAvailability'); //check user and email if already used
 
-  Route::view('/calendar', 'admin.calendardisplay');
+
+
+
+Route::get('/admin/calendar', [CalendarController::class, 'index'])->name('calendar.index');
+Route::post('/admin/calendar', [CalendarController::class, 'store'])->name('calendar.store');
+
   Route::view('/event-requests', 'admin.EventRequest.AllRequest');
   Route::view('/event-requests/pending', 'admin.EventRequest.PendingApproval');
   Route::view('/event-requests/approved-events', 'admin.EventRequest.ApprovedEvents');

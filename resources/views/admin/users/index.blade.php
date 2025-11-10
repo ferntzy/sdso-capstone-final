@@ -29,7 +29,8 @@
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Created</th>
+              <th>Date Created</th>
+              <th>Time</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -40,7 +41,8 @@
                 <td>{{ $user->username }}</td>
                 <td>{{ $user->email }}</td>
                 <td><span class="badge bg-label-info">{{ $user->account_role }}</span></td>
-                <td>{{ $user->created_at->format('Y-m-d') }}</td>
+                <td>{{ $user->created_at->format('Y-m-d' ) }}</td>
+                <td>{{ $user->created_at->format('H:i:s' ) }}</td>
                 <td>
                   <a href="{{ route('users.edit', $user->user_id) }}" class="btn btn-sm btn-warning">
                     <i class="bx bx-edit"></i> Edit

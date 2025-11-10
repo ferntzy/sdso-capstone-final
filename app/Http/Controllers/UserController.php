@@ -66,6 +66,26 @@ class UserController extends Controller
     return redirect()->route('users.index')->with('success', 'User updated successfully!');
   }
 
+
+  //check user and email if already use - lex
+  public function checkAvailability(Request $request)
+{
+    $field = $request->input('field'); // username or email
+    $value = $request->input('value');
+
+    if (!in_array($field, ['username', 'email'])) {
+        return response()->json(['error' => 'Invalid field'], 422);
+    }
+
+    $exists = \App\Models\User::where($field, $value)->exists();
+
+    return response()->json([
+        'available' => !$exists
+    ]);
+}
+
+
+
   public function destroy(User $user)
   {
     $user->delete();
@@ -75,4 +95,6 @@ class UserController extends Controller
       'message' => 'User deleted successfully!',
     ]);
   }
+
+
 }

@@ -6,10 +6,12 @@
 @extends('layouts/contentNavbarLayout')
 
 @section('title', 'Create User')
-
+@include("admin.users.js")
 <head>
   <!-- Bootstrap Icons -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
 </head>
 
 @section('content')
@@ -24,15 +26,18 @@
         <form method="POST" action="{{ route('users.store') }}">
           @csrf
 
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" required>
-          </div>
+          <!-- inside your form in the Blade -->
+         <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" id="username" class="form-control" required>
+          <small id="username-error" class="text-danger" style="display:none;">Username already exists</small>
+        </div>
 
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" required>
-          </div>
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" id="email" class="form-control" required>
+          <small id="email-error" class="text-danger" style="display:none;">Email already exists</small>
+        </div>
 
           <!-- Password Field -->
           <div class="mb-3 position-relative">
@@ -54,6 +59,7 @@
                 <i class="bi bi-eye-slash"></i>
               </span>
             </div>
+
             <!-- Inline error message -->
             <div class="text-danger mt-1" id="password-match-error" style="display:none; font-size: 0.9rem;">
               Passwords do not match
@@ -80,50 +86,6 @@
     </div>
   </div>
 
-  {{-- Scripts --}}
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Toggle password visibility
-      document.querySelectorAll('.toggle-password').forEach(icon => {
-        icon.addEventListener('click', function () {
-          const input = this.parentElement.querySelector('.password-field');
-          const eyeIcon = this.querySelector('i');
-          if (input.type === 'password') {
-            input.type = 'text';
-            eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
-          } else {
-            input.type = 'password';
-            eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
-          }
-        });
-      });
 
-      // Live password match check
-      const passwordInput = document.querySelector('input[name="password"]');
-      const confirmInput = document.querySelector('input[name="password_confirmation"]');
-      const errorDiv = document.getElementById('password-match-error');
-      const form = document.querySelector('form');
-
-      confirmInput.addEventListener('input', function() {
-        if (confirmInput.value === '') {
-          errorDiv.style.display = 'none';
-          return;
-        }
-        if (confirmInput.value !== passwordInput.value) {
-          errorDiv.style.display = 'block';
-        } else {
-          errorDiv.style.display = 'none';
-        }
-      });
-
-      // Prevent form submission if passwords do not match
-      form.addEventListener('submit', function(e) {
-        if (confirmInput.value !== passwordInput.value) {
-          e.preventDefault();
-          confirmInput.focus();
-        }
-      });
-    });
-  </script>
 
 @endsection
