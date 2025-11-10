@@ -10,6 +10,7 @@ use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\FacultyAdviserController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\OrganizationController;
+
 // ============================
 // AUTH ROUTES
 // ============================
@@ -105,6 +106,21 @@ Route::middleware(['auth', 'role:Faculty_Adviser'])->prefix('adviser')->group(fu
 
 
 
+// ============================
+// BARGO ROUTES
+// ============================
+
+Route::middleware(['auth', 'role:BARGO'])->group(function () {
+  Route::get('/bargo/dashboard', [\App\Http\Controllers\BargoController::class, 'dashboard'])->name('bargo.dashboard');
+  Route::get('/bargo/approvals', [\App\Http\Controllers\BargoController::class, 'approvals'])->name('bargo.approvals');
+
+  Route::get('/bargo/permit/{hashed_id}', [\App\Http\Controllers\BargoController::class, 'viewPermitPdf'])->name('bargo.permit.pdf');
+
+  Route::post('/bargo/approve/{id}', [\App\Http\Controllers\BargoController::class, 'approve'])->name('bargo.approve');
+  Route::post('/bargo/reject/{id}', [\App\Http\Controllers\BargoController::class, 'reject'])->name('bargo.reject');
+});
+
+
 
 // ============================
 // OTHER ROLES
@@ -112,8 +128,6 @@ Route::middleware(['auth', 'role:Faculty_Adviser'])->prefix('adviser')->group(fu
 Route::middleware(['auth', 'role:SDSO_Head'])->group(function () {
   Route::view('/sdso/dashboard', 'sdso.dashboard')->name('sdso.dashboard');
 });
-
-
 
 Route::middleware(['auth', 'role:VP_SAS'])->group(function () {
   Route::view('/vpsas/dashboard', 'vpsas.dashboard')->name('vpsas.dashboard');
@@ -123,17 +137,15 @@ Route::middleware(['auth', 'role:SAS_Director'])->group(function () {
   Route::view('/sas/dashboard', 'sas.dashboard')->name('sas.dashboard');
 });
 
-Route::middleware(['auth', 'role:BARGO'])->group(function () {
-  Route::view('/bargo/dashboard', 'bargo.dashboard')->name('bargo.dashboard');
-});
+
 
 // ============================
 // CALENDAR API ROUTES
 // ============================
-Route::prefix('admin')->group(function () {
-  Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
-  Route::post('/calendar/events', [CalendarController::class, 'store'])->name('calendar.store');
-});
+// Route::prefix('admin')->group(function () {
+//   Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
+//   Route::post('/calendar/events', [CalendarController::class, 'store'])->name('calendar.store');
+// });
 
 
 

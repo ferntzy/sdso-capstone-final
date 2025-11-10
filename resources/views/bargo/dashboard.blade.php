@@ -1,29 +1,37 @@
-@php $container = 'container-xxl'; @endphp
-@extends('layouts/contentNavbarLayout')
-@section('title', 'BARGO Dashboard')
+@extends('layouts.app')
 
 @section('content')
-  <div class="{{ $container }} py-4">
-    <h4 class="fw-bold mb-4">Barangay Government Dashboard</h4>
+  <div class="container py-4">
+    <h2 class="mb-4">BARGO Dashboard</h2>
 
-    <div class="alert alert-info">Pending approvals forwarded from Faculty Adviser</div>
+    <div class="row">
 
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="mb-3">Documents for Review</h5>
-        @if(isset($documents) && $documents->isNotEmpty())
-          <ul class="list-group">
-            @foreach($documents as $doc)
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ $doc->event_title }}
-                <a href="{{ route('bargo.review', $doc->id) }}" class="btn btn-sm btn-primary">Review</a>
-              </li>
-            @endforeach
-          </ul>
-        @else
-          <p class="text-muted">No documents to review.</p>
-        @endif
+      <div class="col-md-4">
+        <div class="card shadow-sm border-left-primary p-3">
+          <h5>Pending Approvals</h5>
+          <h2>{{ $pendingReviews }}</h2>
+        </div>
       </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm border-left-success p-3">
+          <h5>Approved</h5>
+          <h2>{{ $approved }}</h2>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm border-left-danger p-3">
+          <h5>Rejected</h5>
+          <h2>{{ $rejected }}</h2>
+        </div>
+      </div>
+
     </div>
+
+    <div class="text-center mt-4">
+      <a href="{{ route('bargo.approvals') }}" class="btn btn-primary">Review Pending Permits</a>
+    </div>
+
   </div>
 @endsection
