@@ -10,7 +10,7 @@ use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\FacultyAdviserController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\OrganizationController;
-
+use App\Http\Controllers\BargoController;
 // ============================
 // AUTH ROUTES
 // ============================
@@ -111,13 +111,24 @@ Route::middleware(['auth', 'role:Faculty_Adviser'])->prefix('adviser')->group(fu
 // ============================
 
 Route::middleware(['auth', 'role:BARGO'])->group(function () {
-  Route::get('/bargo/dashboard', [\App\Http\Controllers\BargoController::class, 'dashboard'])->name('bargo.dashboard');
-  Route::get('/bargo/approvals', [\App\Http\Controllers\BargoController::class, 'approvals'])->name('bargo.approvals');
 
-  Route::get('/bargo/permit/{hashed_id}', [\App\Http\Controllers\BargoController::class, 'viewPermitPdf'])->name('bargo.permit.pdf');
+  // Dashboard
+  Route::get('/bargo/dashboard', [BargoController::class, 'dashboard'])->name('bargo.dashboard');
 
-  Route::post('/bargo/approve/{id}', [\App\Http\Controllers\BargoController::class, 'approve'])->name('bargo.approve');
-  Route::post('/bargo/reject/{id}', [\App\Http\Controllers\BargoController::class, 'reject'])->name('bargo.reject');
+  // View/Approve PDF
+  Route::get('/bargo/permit/{hashed_id}', [BargoController::class, 'viewPermitPdf'])->name('bargo.view.pdf');
+
+  // Approvals Page (this is the one missing)
+  Route::get('/bargo/approvals', [BargoController::class, 'approvals'])->name('bargo.approvals');
+
+  // Approve / Reject actions
+  Route::post('/bargo/approve/{approval_id}', [BargoController::class, 'approve'])->name('bargo.approve');
+  Route::post('/bargo/reject/{approval_id}', [BargoController::class, 'reject'])->name('bargo.reject');
+
+  // Event monitoring pages
+  Route::get('/bargo/events/pending', [BargoController::class, 'pending'])->name('bargo.events.pending');
+  Route::get('/bargo/events/approved', [BargoController::class, 'approved'])->name('bargo.events.approved');
+  Route::get('/bargo/events/history', [BargoController::class, 'history'])->name('bargo.events.history');
 });
 
 

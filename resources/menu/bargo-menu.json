@@ -13,17 +13,17 @@
     },
     {
       "url": "/bargo/events/pending",
-      "name": "Pending",
+      "name": "Pending Approvals",
       "slug": "bargo-events-pending"
     },
     {
       "url": "/bargo/events/approved",
-      "name": "Approved",
+      "name": "Approved Events",
       "slug": "bargo-events-approved"
     },
     {
       "url": "/bargo/events/history",
-      "name": "History",
+      "name": "Event History",
       "slug": "bargo-events-history"
     },
     {

@@ -30,7 +30,16 @@ class BargoController extends Controller
 
     return view('bargo.dashboard', compact('pendingReviews', 'approved', 'rejected'));
   }
+  public function pending()
+  {
+    $pendingReviews = EventApprovalFlow::with(['permit', 'permit.organization'])
+      ->where('approver_role', 'BARGO')
+      ->where('status', 'pending')
+      ->orderBy('created_at', 'asc')
+      ->get();
 
+    return view('bargo.events.pending', compact('pendingReviews'));
+  }
   public function approvals()
   {
     $pendingPermits = EventApprovalFlow::with(['permit.organization'])
@@ -121,6 +130,28 @@ class BargoController extends Controller
     ]);
 
     return back()->with('success', 'Permit approved and signed by BARGO.');
+  }
+
+  public function approved()
+  {
+    $approvedReviews = EventApprovalFlow::with(['permit', 'permit.organization'])
+      ->where('approver_role', 'BARGO')
+      ->where('status', 'approved')
+      ->orderBy('approved_at', 'desc')
+      ->get();
+
+    return view('bargo.events.approved', compact('approvedReviews'));
+  }
+
+  public function history()
+  {
+    $historyReviews = EventApprovalFlow::with(['permit', 'permit.organization'])
+      ->where('approver_role', 'BARGO')
+      ->whereIn('status', ['approved', 'rejected'])
+      ->orderBy('updated_at', 'desc')
+      ->get();
+
+    return view('bargo.events.history', compact('historyReviews'));
   }
 
   public function reject(Request $request, $approval_id)
