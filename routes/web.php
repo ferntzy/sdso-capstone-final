@@ -8,6 +8,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PermitController;
 use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\Admin\AdminProfileController;
+
 // ============================
 // AUTH ROUTES
 // ============================
@@ -39,14 +40,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
 
 
-  Route::get('/admin/profile', [AdminProfileController::class, 'show'])
-    ->name('admin.profile');
+  // Route::get('/admin/profile', [AdminProfileController::class, 'show'])
+  //   ->name('admin.profile');
 
-
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/profile', [AdminProfileController::class, 'show'])->name('admin.profile.show');
+    Route::put('/admin/profile/update', [AdminProfileController::class, 'update'])->name('admin.profile.update');
+});
 
 Route::get('/admin/calendar', [CalendarController::class, 'index'])->name('calendar.index');
 Route::post('/admin/calendar', [CalendarController::class, 'store'])->name('calendar.store');
 
+
+
+//viewing only
   Route::view('/event-requests', 'admin.EventRequest.AllRequest');
   Route::view('/event-requests/pending', 'admin.EventRequest.PendingApproval');
   Route::view('/event-requests/approved-events', 'admin.EventRequest.ApprovedEvents');

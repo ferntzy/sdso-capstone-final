@@ -152,10 +152,11 @@
             <div class="dropdown-divider my-1"></div>
           </li>
           <li>
-            <a class="dropdown-item" href="{{ route('admin.profile') }}">
+            <a class="dropdown-item" href="{{ route('admin.profile.show') }}">
               <i class="mdi mdi-account-outline me-1 mdi-20px"></i>
               <span class="align-middle">My Profile</span>
             </a>
+
           </li>
           <li>
             <a class="dropdown-item" href="javascript:void(0);">
