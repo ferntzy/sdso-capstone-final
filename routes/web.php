@@ -134,3 +134,11 @@ Route::prefix('admin')->group(function () {
   Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
   Route::post('/calendar/events', [CalendarController::class, 'store'])->name('calendar.store');
 });
+
+
+
+
+
+
+Route::get('/adviser/temp/view/{hashed_id}', [FacultyAdviserController::class, 'viewTempPdf'])
+  ->name('adviser.view.temp.pdf');

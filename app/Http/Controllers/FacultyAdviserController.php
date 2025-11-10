@@ -2,20 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use setasign\Fpdi\Fpdi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
 use App\Models\EventApprovalFlow;
 use App\Models\Permit;
 use App\Models\Organization;
 
 class FacultyAdviserController extends Controller
 {
-  /**
-   * Adviser dashboard showing permit counts.
-   */
   public function dashboard()
   {
     $adviserId = Auth::user()->user_id;
@@ -50,9 +45,6 @@ class FacultyAdviserController extends Controller
     return view('adviser.dashboard', compact('pendingReviews', 'approved', 'rejected'));
   }
 
-  /**
-   * List pending approvals for adviser.
-   */
   public function approvals()
   {
     $adviserId = Auth::user()->user_id;
@@ -75,114 +67,93 @@ class FacultyAdviserController extends Controller
     return view('adviser.approvals', compact('pendingPermits'));
   }
 
-  /**
-   * View PDF of a permit by hashed_id.
-   */
   public function viewPermitPdf($hashed_id)
   {
-    $permit = Permit::where('hashed_id', $hashed_id)->firstOrFail();
+    $permit = Permit::where('hashed_id', $hashed_id)->first();
 
-    if ($permit->pdf_data) {
-      return response($permit->pdf_data)
-        ->header('Content-Type', 'application/pdf');
+    if (!$permit) {
+      abort(404, 'Permit not found.');
     }
-
-    abort(404, 'PDF not available.');
-  }
-
-  /**
-   * Approve a permit and insert adviser signature & name.
-   */
-  public function approve(Request $request, $approval_id)
-  {
-    $request->validate([
-      'password' => 'required',
-      'signature_data' => 'nullable',
-      'signature_upload' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-    ]);
-
-    // Check password
-    if (!Hash::check($request->password, Auth::user()->password)) {
-      return back()->with('error', 'Incorrect password. Approval canceled.');
-    }
-
-    $flow = EventApprovalFlow::findOrFail($approval_id);
-    $permit = Permit::findOrFail($flow->permit_id);
 
     if (!$permit->pdf_data) {
-      return back()->with('error', 'PDF is not generated yet.');
+      abort(404, 'PDF not available.');
     }
 
-    // Handle signature storage
-    if ($request->signature_upload) {
-      $flow->signature_path = $request->file('signature_upload')->store('signatures', 'public');
-    } elseif ($request->signature_data) {
-      $image = str_replace('data:image/png;base64,', '', $request->signature_data);
-      $image = base64_decode($image);
-      $fileName = 'signatures/' . uniqid() . '.png';
-      Storage::disk('public')->put($fileName, $image);
-      $flow->signature_path = $fileName;
-    }
-
-    // Update approval flow
-    $flow->status = 'approved';
-    $flow->approver_id = Auth::user()->user_id;
-    $flow->approved_at = now();
-    $flow->save();
-
-    // Insert signature & name into PDF via PDF.co
-    $pdfBase64 = base64_encode($permit->pdf_data);
-    $signatureBase64 = null;
-
-    if ($flow->signature_path && file_exists(storage_path('app/public/' . $flow->signature_path))) {
-      $signatureBase64 = base64_encode(file_get_contents(storage_path('app/public/' . $flow->signature_path)));
-    }
-
-    $adviserName = strtoupper(Auth::user()->name);
-
-    $payload = [
-      "async" => false,
-      "profiles" => "optimize",
-      "url" => "data:application/pdf;base64,$pdfBase64",
-      "images" => $signatureBase64 ? [
-        [
-          "x" => 153,       // Adjust X for your template
-          "y" => 207,       // Adjust Y for your template
-          "width" => 40,    // Signature width
-          "height" => 20,   // Signature height
-          "image" => "data:image/png;base64,$signatureBase64",
-          "pages" => "1"
-        ]
-      ] : [],
-      "text" => [
-        [
-          "text" => $adviserName,
-          "x" => 153,         // Same X as signature
-          "y" => 203,         // Slightly above signature
-          "size" => 10,
-          "pages" => "1"
-        ]
-      ]
-    ];
-
-    $response = Http::withHeaders([
-      "x-api-key" => config('services.pdfco.key')
-    ])->post("https://api.pdf.co/v1/pdf/edit/add", $payload);
-
-    if (!$response->successful() || !$response->json('body')) {
-      return back()->with('error', 'PDF.co failed: ' . $response->json('message'));
-    }
-
-    $updatedPdfBase64 = $response->json('body');
-    $permit->pdf_data = base64_decode($updatedPdfBase64);
-    $permit->save();
-
-    return back()->with('success', 'Permit approved and PDF updated.');
+    return response($permit->pdf_data)
+      ->header('Content-Type', 'application/pdf')
+      ->header('Content-Disposition', 'inline; filename="permit.pdf"');
   }
 
-  /**
-   * Reject a permit.
-   */
+  public function approve(Request $request, $approval_id)
+  {
+    $flow = EventApprovalFlow::findOrFail($approval_id);
+    $permit = $flow->permit;
+
+    if (!$permit->pdf_data) {
+      return back()->with('error', 'No PDF found for this permit.');
+    }
+
+    $adviserName = strtoupper(Auth::user()->name ?? 'UNKNOWN');
+
+    $tempDir = storage_path('app/temp');
+    if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
+
+    $tempPdfPath = $tempDir . "/temp_permit_{$permit->hashed_id}.pdf";
+    file_put_contents($tempPdfPath, $permit->pdf_data);
+
+    $pdf = new Fpdi();
+    $pdf->AddPage();
+    $pdf->setSourceFile($tempPdfPath);
+    $templateId = $pdf->importPage(1);
+    $pdf->useTemplate($templateId, 0, 0, 210);
+
+    // ===== Signature =====
+    $signaturePath = null;
+    if ($request->hasFile('signature_upload')) {
+      $signaturePath = $request->file('signature_upload')->getPathName();
+    } elseif ($request->filled('signature_data')) {
+      $imgData = str_replace('data:image/png;base64,', '', $request->input('signature_data'));
+      $img = str_replace(' ', '+', $imgData);
+      $signaturePath = $tempDir . "/signature_{$approval_id}.png";
+      file_put_contents($signaturePath, base64_decode($img));
+    }
+
+    // ===== Coordinates =====
+    $centerX = 100;
+    $signatureY = 128;
+    $nameY = 138;
+
+    // Draw signature centered
+    if ($signaturePath && file_exists($signaturePath)) {
+      $sigWidth = 40;
+      list($origWidth, $origHeight) = getimagesize($signaturePath);
+      $sigHeight = ($sigWidth / $origWidth) * $origHeight;
+      $sigX = $centerX - ($sigWidth / 2);
+      $pdf->Image($signaturePath, $sigX, $signatureY, $sigWidth, $sigHeight);
+    }
+
+    // Draw name centered
+    $pdf->SetFont('Helvetica', '', 10);
+    $textWidth = $pdf->GetStringWidth($adviserName);
+    $pdf->SetXY($centerX - ($textWidth / 2), $nameY);
+    $pdf->Write(0, $adviserName);
+
+    // ===== Save updated PDF to database =====
+    $tempOutput = $tempDir . "/approved_{$permit->hashed_id}.pdf";
+    $pdf->Output($tempOutput, 'F');
+    $permit->pdf_data = file_get_contents($tempOutput);
+    $permit->save();
+
+    // Update approval flow
+    $flow->update([
+      'status' => 'approved',
+      'approver_id' => Auth::user()->user_id,
+      'approved_at' => now(),
+    ]);
+
+    return back()->with('success', 'Permit approved successfully!');
+  }
+
   public function reject(Request $request, $approval_id)
   {
     $request->validate(['comments' => 'required|string']);
@@ -195,6 +166,16 @@ class FacultyAdviserController extends Controller
       'approved_at' => now(),
     ]);
 
-    return back()->with('error', 'Permit rejected.');
+    return back()->with('success', 'Permit rejected successfully!');
+  }
+
+  public function viewTempPdf($hashed_id)
+  {
+    $filePath = storage_path("app/temp/approved_{$hashed_id}.pdf");
+    if (!file_exists($filePath)) {
+      abort(404, 'Temporary PDF not found.');
+    }
+
+    return response()->file($filePath);
   }
 }

@@ -34,7 +34,7 @@
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
       <!-- Search -->
       @php
-        $searchVisibleRoutes = ['admin.logs'];
+        $searchVisibleRoutes = ['admin.logs', 'users.index'];
       @endphp
 
       @if(in_array(Route::currentRouteName(), $searchVisibleRoutes))
