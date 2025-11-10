@@ -11,25 +11,21 @@ class Organization extends Model
 
   protected $table = 'organizations';
   protected $primaryKey = 'organization_id';
+  public $timestamps = true;
 
   protected $fillable = [
-    'user_id',
-    'organization_name',
-    'organization_type',
-    'adviser_name',
-    'contact_email',
-    'contact_number',
+    'name',
+    'adviser_id',
+    // any other columns
   ];
 
-  // 🔗 Link back to the user
-  public function user()
+  public function adviser()
   {
-    return $this->belongsTo(User::class, 'user_id');
+    return $this->belongsTo(User::class, 'adviser_id', 'user_id');
   }
 
-  // 🔗 Link to events
-  public function events()
+  public function permits()
   {
-    return $this->hasMany(Event::class, 'organization_id');
+    return $this->hasMany(Permit::class, 'organization_id', 'organization_id');
   }
 }

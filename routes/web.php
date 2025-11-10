@@ -8,6 +8,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PermitController;
 use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\Admin\AdminProfileController;
+use App\Http\Controllers\BargoController;
 // ============================
 // AUTH ROUTES
 // ============================
@@ -44,8 +45,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
 
 
-Route::get('/admin/calendar', [CalendarController::class, 'index'])->name('calendar.index');
-Route::post('/admin/calendar', [CalendarController::class, 'store'])->name('calendar.store');
+  Route::get('/admin/calendar', [CalendarController::class, 'index'])->name('calendar.index');
+  Route::post('/admin/calendar', [CalendarController::class, 'store'])->name('calendar.store');
 
   Route::view('/event-requests', 'admin.EventRequest.AllRequest');
   Route::view('/event-requests/pending', 'admin.EventRequest.PendingApproval');
@@ -78,6 +79,39 @@ Route::middleware(['auth', 'role:Student_Organization'])->prefix('student')->gro
   // ✅ Added route to view individual permit PDF
   Route::get('/permit/view/{permit}', [PermitController::class, 'view'])->name('student.permit.view');
 });
+
+
+
+// ============================
+// BARGO ROUTES
+// ============================
+
+
+Route::middleware(['auth', 'role:BARGO'])->group(function () {
+
+  // Dashboard
+  Route::get('/bargo/dashboard', [BargoController::class, 'dashboard'])->name('bargo.dashboard');
+
+  // View/Approve PDF
+  Route::get('/bargo/permit/{hashed_id}', [BargoController::class, 'viewPermitPdf'])->name('bargo.view.pdf');
+
+  // Approvals Page (this is the one missing)
+  Route::get('/bargo/approvals', [BargoController::class, 'approvals'])->name('bargo.approvals');
+  Route::get('/bargo/permit/view/{hashed_id}', [BargoController::class, 'viewPermitPdf'])->name('bargo.view.permit');
+  // Approve / Reject actions
+  Route::post('/bargo/approve/{approval_id}', [BargoController::class, 'approve'])->name('bargo.approve');
+  Route::post('/bargo/reject/{approval_id}', [BargoController::class, 'reject'])->name('bargo.reject');
+
+  // Event monitoring pages
+  Route::get('/bargo/events/pending', [BargoController::class, 'pending'])->name('bargo.events.pending');
+  Route::get('/bargo/events/approved', [BargoController::class, 'approved'])->name('bargo.events.approved');
+  Route::get('/bargo/events/history', [BargoController::class, 'history'])->name('bargo.events.history');
+});
+
+
+
+
+
 // ============================
 // OTHER ROLES
 // ============================
@@ -97,9 +131,8 @@ Route::middleware(['auth', 'role:SAS_Director'])->group(function () {
   Route::view('/sas/dashboard', 'sas.dashboard')->name('sas.dashboard');
 });
 
-Route::middleware(['auth', 'role:BARGO'])->group(function () {
-  Route::view('/bargo/dashboard', 'bargo.dashboard')->name('bargo.dashboard');
-});
+
+
 
 // ============================
 // CALENDAR API ROUTES
