@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\PermitController;
 use App\Http\Controllers\StudentEventController;
+use App\Http\Controllers\Admin\AdminProfileController;
 // ============================
 // AUTH ROUTES
 // ============================
@@ -36,6 +37,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
   Route::post('/users/check-availability', [UserController::class, 'checkAvailability'])
     ->name('users.checkAvailability'); //check user and email if already used
 
+
+
+  Route::get('/admin/profile', [AdminProfileController::class, 'show'])
+    ->name('admin.profile');
 
 
 
