@@ -8,16 +8,35 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-  public function index()
-  {
-    $users = User::all();
-    return view('admin.users.index', compact('users'));
-  }
+ public function index(Request $request)
+{
+    // Allowed columns for sorting
+    $sortable = ['account_role', 'created_at'];
 
-  public function create()
-  {
+    // Get query parameters
+    $sortField = $request->query('sort');
+    $sortDirection = $request->query('direction', 'asc');
+
+    // Validate sorting
+    if (!in_array($sortField, $sortable)) {
+        $sortField = 'created_at'; // default sort
+    }
+    if (!in_array($sortDirection, ['asc', 'desc'])) {
+        $sortDirection = 'asc';
+    }
+
+    // Fetch users with sorting
+    $users = User::orderBy($sortField, $sortDirection)->get();
+
+    // Pass sort info to the view (so arrows know which is active)
+    return view('admin.users.index', compact('users', 'sortField', 'sortDirection'));
+}
+
+public function create()
+{
     return view('admin.users.create');
-  }
+}
+
 
   public function store(Request $request)
   {

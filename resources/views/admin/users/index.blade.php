@@ -4,8 +4,22 @@
 @endphp
 
 @extends('layouts/contentNavbarLayout')
+@include('admin.users.js')
 
 @section('title', 'Users Management')
+
+<style>
+  th a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: inherit;
+  }
+
+  th a:hover {
+    text-decoration: underline;
+  }
+</style>
 
 @section('content')
   <div class="{{ $container }}">
@@ -25,15 +39,61 @@
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
+              {{-- Static headers --}}
               <th>ID</th>
               <th>Username</th>
               <th>Email</th>
-              <th>Role</th>
-              <th>Date Created</th>
-              <th>Time</th>
+
+              {{-- Sortable: Role --}}
+              <th>
+                <a href="{{ route('users.index', ['sort' => 'account_role', 'direction' => ($sortField === 'account_role' && $sortDirection === 'asc') ? 'desc' : 'asc']) }}"
+                   class="text-decoration-none text-dark fw-semibold">
+                  Role
+                  @if($sortField === 'account_role')
+                    @if($sortDirection === 'asc')
+                      ▲
+                    @else
+                      ▼
+                    @endif
+                  @endif
+                </a>
+              </th>
+
+              {{-- Sortable: Date Created --}}
+              <th>
+                <a href="{{ route('users.index', ['sort' => 'created_at', 'direction' => ($sortField === 'created_at' && $sortDirection === 'asc') ? 'desc' : 'asc']) }}"
+                   class="text-decoration-none text-dark fw-semibold">
+                  Date Created
+                  @if($sortField === 'created_at')
+                    @if($sortDirection === 'asc')
+                      ▲
+                    @else
+                      ▼
+                    @endif
+                  @endif
+                </a>
+              </th>
+
+              {{-- Sortable: Time --}}
+              <th>
+                <a href="{{ route('users.index', ['sort' => 'created_at', 'direction' => ($sortField === 'created_at' && $sortDirection === 'asc') ? 'desc' : 'asc']) }}"
+                   class="text-decoration-none text-dark fw-semibold">
+                  Time
+                  @if($sortField === 'created_at')
+                    @if($sortDirection === 'asc')
+                      ▲
+                    @else
+                      ▼
+                    @endif
+                  @endif
+                </a>
+              </th>
+
+              {{-- Static header: Actions --}}
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
             @forelse($users as $user)
               <tr>
@@ -41,22 +101,24 @@
                 <td>{{ $user->username }}</td>
                 <td>{{ $user->email }}</td>
                 <td><span class="badge bg-label-info">{{ $user->account_role }}</span></td>
-                <td>{{ $user->created_at->format('Y-m-d' ) }}</td>
-                <td>{{ $user->created_at->format('H:i:s' ) }}</td>
+                <td>{{ $user->created_at->format('Y-m-d') }}</td>
+                <td>{{ $user->created_at->format('H:i:s') }}</td>
                 <td>
                   <a href="{{ route('users.edit', $user->user_id) }}" class="btn btn-sm btn-warning">
                     <i class="bx bx-edit"></i> Edit
                   </a>
-                  <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                    data-bs-target="#confirmDeleteModal" data-user-id="{{ $user->user_id }}"
-                    data-username="{{ $user->username }}">
+                  <button type="button" class="btn btn-danger btn-sm"
+                          data-bs-toggle="modal"
+                          data-bs-target="#confirmDeleteModal"
+                          data-user-id="{{ $user->user_id }}"
+                          data-username="{{ $user->username }}">
                     <i class="bx bx-trash"></i> Delete
                   </button>
                 </td>
               </tr>
             @empty
               <tr>
-                <td colspan="6" class="text-center text-muted">No users found.</td>
+                <td colspan="7" class="text-center text-muted">No users found.</td>
               </tr>
             @endforelse
           </tbody>
@@ -83,6 +145,7 @@
         </div>
       </div>
     </div>
+
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const successModal = new bootstrap.Modal(document.getElementById('successModal'));
@@ -125,81 +188,5 @@
       </form>
     </div>
   </div>
-
-  <script src="{{ asset('assets/vendor/libs/jquery/jquery.js') }}"></script>
-  <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>
-  <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const deleteModal = document.getElementById('confirmDeleteModal');
-    const togglePasswordBtn = document.getElementById('togglePassword');
-    const adminPasswordInput = document.getElementById('adminPassword');
-    const passwordError = document.getElementById('passwordError');
-    const deleteForm = document.getElementById('deleteUserForm');
-
-    // Show/Hide password
-    togglePasswordBtn.addEventListener('click', function () {
-        if (adminPasswordInput.type === 'password') {
-            adminPasswordInput.type = 'text';
-            this.innerHTML = '<i class="bx bx-hide"></i>';
-        } else {
-            adminPasswordInput.type = 'password';
-            this.innerHTML = '<i class="bx bx-show"></i>';
-        }
-    });
-
-    // Set form action and username on modal show
-    deleteModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const userId = button.getAttribute('data-user-id');
-        const username = button.getAttribute('data-username');
-        const message = document.getElementById('deleteMessage');
-
-        deleteForm.action = "{{ route('users.destroy', ':id') }}".replace(':id', userId);
-        message.textContent = `Are you sure you want to delete the account "${username}"?`;
-        passwordError.classList.add('d-none');
-        adminPasswordInput.value = '';
-    });
-
-    // AJAX form submission
-    deleteForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const formData = new FormData(deleteForm);
-
-        fetch(deleteForm.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': formData.get('_token'),
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Close modal
-                const bsDeleteModal = bootstrap.Modal.getInstance(deleteModal);
-                bsDeleteModal.hide();
-
-                // Remove deleted row from table
-                const row = document.querySelector(`button[data-user-id="${data.user_id}"]`).closest('tr');
-                if (row) row.remove();
-
-                // Show success modal
-                const successModalEl = document.getElementById('successModal');
-                document.getElementById('successModalLabel').textContent = 'Deleted';
-                document.querySelector('#successModal .modal-body').textContent = data.message;
-                const successModal = new bootstrap.Modal(successModalEl);
-                successModal.show();
-            } else if (data.error) {
-                passwordError.textContent = data.error;
-                passwordError.classList.remove('d-none');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-        });
-    });
-});
-</script>
 
 @endsection

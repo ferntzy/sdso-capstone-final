@@ -1,77 +1,15 @@
-{{-- <script> MICHAEL --------------------------------------------------
-
-  $.ajaxSetup({
-  headers: {
-    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-  }
-});
-
-
-$(document).on("click", "#btnCreate", function(e){
-  e.preventDefault();
-  $.ajax({
-    url: "{{ route('users.store') }}",
-    method: "POST",
-    data: $("#frmCreate").serialize(),
-    cache: false,
-
-    beforeSend: function() {
-      $("#btnCreate").prop("disabled", true).html("Creating account...");
-    },
-
-    success: function(response) {
-      $("#btnCreate").prop("disabled", false).html("CREATE");
-
-      Swal.fire({
-        title: "Success",
-        icon: "success",
-        text: response.message || "User created successfully"
-      }).then(() => {
-        // ✅ Clear the form after success
-        $("#frmCreate")[0].reset();
-
-        $("#frmCreate input[name='username']").focus();
-        window.location.href = "{{ route('users.index') }}";
-      });
-    },
-
-    error: function(xhr) {
-      $("#btnCreate").prop("disabled", false).html("CREATE");
-      // Handle Laravel exception messages
-      let message = "An unexpected error occurred.";
-
-      if (xhr.responseJSON) {
-        if (xhr.responseJSON.error) {
-          message = xhr.responseJSON.error; // from catch(Exception $e)
-        } else if (xhr.responseJSON.errors) {
-          // from validation errors (array)
-          message = Object.values(xhr.responseJSON.errors).flat().join("\n");
-        } else if (xhr.responseJSON.message) {
-          // fallback for generic Laravel JSON responses
-          message = xhr.responseJSON.message;
-        }
-      }
-
-      Swal.fire({
-        title: "Error!",
-        text: message,
-        icon: "error"
-      });
-    }
-  })
-})
-</script> --}}
 
 
 
-{{-- LIIBRARRRYYYYY--}}
+
+{{------------------------------------------------------------------------LIBRARY--------------------------}}
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
  <script src="{{ asset('assets/vendor/libs/jquery/jquery.js') }}"></script>
  <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>
 
 
 
-
+{{--------------------------------------------------------------------- CREATE ACCOUNT-------------------------------------------------}}
 <script>
   //para password hide and seek
     document.addEventListener('DOMContentLoaded', function() {
@@ -288,4 +226,202 @@ $(document).on("click", "#btnCreate", function(e){
 
         });
       });
+</script>
+
+
+{{----------------------------------------------------------------------USER LIST OF ACCOUNTS--------------------------------------}}
+
+   <script>
+      document.addEventListener('DOMContentLoaded', function () {
+      const deleteModal = document.getElementById('confirmDeleteModal');
+      const togglePasswordBtn = document.getElementById('togglePassword');
+      const adminPasswordInput = document.getElementById('adminPassword');
+      const passwordError = document.getElementById('passwordError');
+      const deleteForm = document.getElementById('deleteUserForm');
+
+      // Show/Hide password upon delete
+      togglePasswordBtn.addEventListener('click', function () {
+          if (adminPasswordInput.type === 'password') {
+              adminPasswordInput.type = 'text';
+              this.innerHTML = '<i class="bx bx-hide"></i>';
+          } else {
+              adminPasswordInput.type = 'password';
+              this.innerHTML = '<i class="bx bx-show"></i>';
+          }
+      });
+
+      // Set form action and username on modal show
+      deleteModal.addEventListener('show.bs.modal', function (event) {
+          const button = event.relatedTarget;
+          const userId = button.getAttribute('data-user-id');
+          const username = button.getAttribute('data-username');
+          const message = document.getElementById('deleteMessage');
+
+          deleteForm.action = "{{ route('users.destroy', ':id') }}".replace(':id', userId);
+          message.textContent = `Are you sure you want to delete the account "${username}"?`;
+          passwordError.classList.add('d-none');
+          adminPasswordInput.value = '';
+      });
+
+      // AJAX form submission
+      deleteForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          const formData = new FormData(deleteForm);
+
+          fetch(deleteForm.action, {
+              method: 'POST',
+              headers: {
+                  'X-CSRF-TOKEN': formData.get('_token'),
+                  'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  // Close modal
+                  const bsDeleteModal = bootstrap.Modal.getInstance(deleteModal);
+                  bsDeleteModal.hide();
+
+                  // Remove deleted row from table
+                  const row = document.querySelector(`button[data-user-id="${data.user_id}"]`).closest('tr');
+                  if (row) row.remove();
+
+                  // Show success modal
+                  const successModalEl = document.getElementById('successModal');
+                  document.getElementById('successModalLabel').textContent = 'Deleted';
+                  document.querySelector('#successModal .modal-body').textContent = data.message;
+                  const successModal = new bootstrap.Modal(successModalEl);
+                  successModal.show();
+              } else if (data.error) {
+                  passwordError.textContent = data.error;
+                  passwordError.classList.remove('d-none');
+              }
+          })
+          .catch(err => {
+              console.error(err);
+          });
+      });
+    });
+ </script>
+
+ <script>
+  //SEARCH BARRRRRRR
+    document.addEventListener("DOMContentLoaded", () => {
+      const searchInput = document.querySelector('#globalSearch'); // global search bar
+      const tableBody = document.querySelector('#logsBody');
+      const rows = Array.from(tableBody.querySelectorAll('tr'));
+      const paginationWrapper = document.querySelector('#paginationWrapper');
+      const rowsPerPage = 20;
+      let currentPage = 1;
+
+      // Render table function
+      function renderTable(filteredRows) {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const visibleRows = filteredRows.slice(start, end);
+
+        tableBody.innerHTML = '';
+        visibleRows.forEach(row => tableBody.appendChild(row));
+
+        // Pagination buttons
+        paginationWrapper.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement('button');
+          btn.textContent = i;
+          btn.className = 'btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-primary');
+          btn.addEventListener('click', () => {
+            currentPage = i;
+            renderTable(filteredRows);
+          });
+          paginationWrapper.appendChild(btn);
+        }
+      }
+
+      // Live search filter
+      function applySearch() {
+        const query = searchInput.value.toLowerCase().trim();
+        const filtered = rows.filter(row => row.textContent.toLowerCase().includes(query));
+        currentPage = 1; // always start from page 1 when searching
+        renderTable(filtered);
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', applySearch);
+      }
+
+      // Initial table
+      renderTable(rows);
+    });
+ </script>
+
+
+
+
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const table = document.querySelector("table");
+  const headers = table.querySelectorAll("th");
+
+  // Only these column indexes are sortable (0-based)
+  const sortableColumns = [3, 4, 5]; // Role, Date Created, Time
+
+  headers.forEach((header, index) => {
+    if (!sortableColumns.includes(index)) return; // Skip non-sortable headers
+
+    header.style.cursor = "pointer"; // Indicate it's clickable
+
+    // Create a single arrow span and append once
+    const arrow = document.createElement("span");
+    arrow.classList.add("sort-arrow");
+    arrow.style.marginLeft = "6px";
+    arrow.textContent = "▲"; // default (neutral)
+    arrow.style.opacity = "0.3"; // faded look for inactive
+    header.appendChild(arrow);
+
+    header.addEventListener("click", () => {
+      const rows = Array.from(table.querySelectorAll("tbody tr"));
+      const ascending = !header.classList.contains("asc");
+
+      // Clear sorting states from other sortable headers
+      headers.forEach(h => {
+        if (h !== header && sortableColumns.includes([...headers].indexOf(h))) {
+          h.classList.remove("asc", "desc");
+          const hArrow = h.querySelector(".sort-arrow");
+          if (hArrow) {
+            hArrow.textContent = "▲";
+            hArrow.style.opacity = "0.3"; // reset faded
+          }
+        }
+      });
+
+      // Toggle direction for clicked header
+      header.classList.toggle("asc", ascending);
+      header.classList.toggle("desc", !ascending);
+
+      // Sort rows
+      rows.sort((a, b) => {
+        const aText = a.children[index].innerText.trim();
+        const bText = b.children[index].innerText.trim();
+        return ascending
+          ? aText.localeCompare(bText, undefined, { numeric: true })
+          : bText.localeCompare(aText, undefined, { numeric: true });
+      });
+
+      // Re-render sorted rows
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
+      rows.forEach(row => tbody.appendChild(row));
+
+      // Update arrow for active header
+      arrow.textContent = ascending ? "▲" : "▼";
+      arrow.style.opacity = "1"; // highlight active arrow
+    });
+  });
+});
 </script>
