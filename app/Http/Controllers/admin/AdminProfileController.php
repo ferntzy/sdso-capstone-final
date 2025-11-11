@@ -56,4 +56,10 @@ class AdminProfileController extends Controller
         return redirect()->route('admin.profile.show')->with('success', 'Profile updated successfully!');
 
     }
+
+    public function profile() {
+    $admin = Auth::user();
+    return view('admin.profile.admin_profile', compact('admin'));
+}
+
 }
